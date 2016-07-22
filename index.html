@@ -33,7 +33,7 @@ div.tooltip {
   height: 600px;
 }
 
-text {
+.children text {
   pointer-events: none;
 }
 
@@ -78,6 +78,11 @@ rect.child {
   fill-opacity: .9 !important;
 }
 
+text:hover {
+	cursor: pointer;
+	font-weight: bold;
+    text-decoration: underline;
+}
 
 </style>
 
@@ -284,17 +289,17 @@ grandparent.append("text")
     g.append("rect")
         .attr("class", "parent")
         .call(rect)
+      //.append("title")
+        .text(function(d) { return formatNumber(d.value); });
+
+    g.append("text")
+        .text(function(d) { return d.name; })
 		.on("click", function(d) { 
 			if (!this.parentNode.classList.contains('children')) {
 				var index = rowheaders[d.id].index;
 				rows[index].children[0].children[0].click();
 			} 
 		})
-      //.append("title")
-        .text(function(d) { return formatNumber(d.value); });
-
-    g.append("text")
-        .text(function(d) { return d.name; })
         .call(text_center)
         .call(text_display);
 	
