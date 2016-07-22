@@ -1,0 +1,424 @@
+<confirmit:wysiwygcomponent type="LanguageText" id="9ac9bc43-89cc-46f2-9a95-797f3d31c0d8" />
+<confirmit:wysiwygcomponent type="AggregatedTable" id="4ce7bc0b-c96f-4e93-8a84-e22327ea71d0" />
+<div id="treemap"></div>
+
+<style>
+svg {
+  font: 12px sans-serif;
+}
+
+.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+div.tooltip {	
+    position: absolute;			
+    text-align: center;						
+    height: 28px;				
+    font: 12px sans-serif;		
+    background: #cdcdef;	
+    color: #444444;	
+    border: 0px;				
+    pointer-events: none;			
+	padding: 8px;
+}
+
+
+#treemap {
+  margin: 8px;
+  margin-top: 40px;
+  width: 1060px;
+  height: 600px;
+}
+
+text {
+  pointer-events: none;
+}
+
+.grandparent text {
+  font-weight: bold;
+  fill: white;
+}
+
+rect {
+  fill: none;
+  stroke: #fff;
+}
+
+rect.parent,
+.grandparent rect {
+  stroke-width: 2px;
+}
+
+.grandparent rect {
+	fill: #225d86;
+}
+
+.grandparent:hover rect {
+	fill: #003b64 ;
+}
+
+.children rect.parent,
+.grandparent rect {
+  cursor: pointer;
+}
+
+rect.parent {
+	fill: white;
+	fill-opacity: 0;
+}
+
+rect.child {
+  fill-opacity: .5;
+}
+
+.children:hover rect.child {
+  fill-opacity: .9 !important;
+}
+
+
+</style>
+
+
+<script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+<script>
+var root = { name: 'Themes', children: hierarchy};
+var rows = document.querySelectorAll('#confirmit_agg_table tbody tr');
+//AddSize(root);
+AddValue(root);
+AddSentiment(root);
+AddParent(root);
+RemoveEmptyChildren(root);
+
+function AddSize(node) {
+	if (node.children.length > 0) {
+		node.size = undefined;
+		for (var i = 0; i < node.children.length; i++) {
+			AddSize(node.children[i])
+		}
+	} else {
+		var index = rowheaders[node.id].index;
+		node.size = +rows[index].children[3].innerText;
+	}	
+}
+
+function AddValue(node) {
+	if (node.children.length > 0) {
+		node.value = undefined;
+		for (var i = 0; i < node.children.length; i++) {
+			AddValue(node.children[i])
+		}
+	} else {
+		var index = rowheaders[node.id].index;
+		node.value = +rows[index].children[3].innerText;
+	}	
+}
+
+
+function AddSentiment(node) {
+	if (node.children.length > 0) {
+		for (var i = 0; i < node.children.length; i++) {
+			AddSentiment(node.children[i])
+		}
+	}
+	if (node != root)
+	{
+		var index = rowheaders[node.id].index;
+		node.sentiment = +rows[index].children[2].innerText;
+	}
+}
+
+function AddParent(node, parent) {
+	if (node.children.length > 0) {
+		for (var i = 0; i < node.children.length; i++) {
+			AddParent(node.children[i], node)
+		}
+	} else {
+		node.parent = parent;
+	}	
+}
+
+function RemoveEmptyChildren(node) {
+	if (node.children.length > 0) {
+		for (var i = 0; i < node.children.length; i++) {
+			RemoveEmptyChildren(node.children[i])
+		}
+	} else {
+		node.children = undefined;
+	}	
+}
+
+
+
+var margin = {top: 20, right: 0, bottom: 0, left: 0},
+    width = 1060,
+    height = 600 - margin.top - margin.bottom,
+    formatNumber = d3.format(",d"),
+    transitioning,
+	color = function(sentiment) {
+		if (+sentiment > 0) {
+			return '#8AE274'; //green
+		} else {
+			if (+sentiment < 0) {
+				return '#D4494F '; // red
+			}
+			else {
+				return '#FFEC42'; // yellow
+			}
+		}
+	};
+
+var x = d3.scale.linear()
+    .domain([0, width])
+    .range([0, width]);
+
+var y = d3.scale.linear()
+    .domain([0, height])
+    .range([0, height]);
+
+var treemap = d3.layout.treemap()
+    .children(function(d, depth) { return depth ? null : d._children; })
+    .sort(function(a, b) { return a.value - b.value; })
+    .ratio(height / width * 0.5 * (1 + Math.sqrt(5)))
+    .round(false);
+
+var svg = d3.select("#treemap").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.bottom + margin.top)
+    .style("margin-left", -margin.left + "px")
+    .style("margin.right", -margin.right + "px")
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+    .style("shape-rendering", "crispEdges");
+
+var grandparent = svg.append("g")
+    .attr("class", "grandparent");
+
+grandparent.append("rect")
+    .attr("y", -margin.top)
+    .attr("width", width)
+    .attr("height", margin.top);
+
+grandparent.append("text")
+    .attr("x", 6)
+    .attr("y", 6 - margin.top)
+    .attr("dy", ".75em");
+
+	
+  initialize(root);
+  accumulate(root);
+  layout(root);
+  display(root);
+  
+
+  function initialize(root) {
+    root.x = root.y = 0;
+    root.dx = width;
+    root.dy = height;
+    root.depth = 0;
+  }
+
+  // Aggregate the values for internal nodes. This is normally done by the
+  // treemap layout, but not here because of our custom implementation.
+  // We also take a snapshot of the original children (_children) to avoid
+  // the children being overwritten when when layout is computed.
+  function accumulate(d) {
+	d._children = d.children;
+	if (d._children) {
+		d.value = d.children.reduce(function(p, v) { return p + accumulate(v); }, 0);
+	}
+	return d.value;	
+  }
+
+  // Compute the treemap layout recursively such that each group of siblings
+  // uses the same size (1×1) rather than the dimensions of the parent cell.
+  // This optimizes the layout for the current zoom state. Note that a wrapper
+  // object is created for the parent node for each group of siblings so that
+  // the parent’s dimensions are not discarded as we recurse. Since each group
+  // of sibling was laid out in 1×1, we must rescale to fit using absolute
+  // coordinates. This lets us use a viewport to zoom.
+  function layout(d) {
+    if (d._children) {
+      treemap.nodes({_children: d._children});
+      d._children.forEach(function(c) {
+        c.x = d.x + c.x * d.dx;
+        c.y = d.y + c.y * d.dy;
+        c.dx *= d.dx;
+        c.dy *= d.dy;
+        c.parent = d;
+		
+        layout(c);
+      });
+    }
+  }
+
+  function display(d) {
+    grandparent
+        .datum(d.parent)
+        .on("click", transition)
+      .select("text")
+        .text(name(d));
+
+    var g1 = svg.insert("g", ".grandparent")
+        .datum(d)
+        .attr("class", "depth");
+
+    var g = g1.selectAll("g")
+        .data(d._children)
+      .enter().append("g");
+
+    g.filter(function(d) { return d._children; })
+        .classed("children", true)
+        .on("click", transition);
+
+    g.selectAll(".child")
+        .data(function(d) { return d._children || [d]; })
+      .enter().append("rect")
+        .attr("class", "child")
+		.style("fill", function(d) { return this.parentNode.classList.contains('children') ? color(d.parent.sentiment) :  color(d.sentiment) ; })
+        .call(rect);
+
+    g.append("rect")
+        .attr("class", "parent")
+        .call(rect)
+		.on("click", function(d) { 
+			if (!this.parentNode.classList.contains('children')) {
+				var index = rowheaders[d.id].index;
+				rows[index].children[0].children[0].click();
+			} 
+		})
+      //.append("title")
+        .text(function(d) { return formatNumber(d.value); });
+
+    g.append("text")
+        .text(function(d) { return d.name; })
+        .call(text_center)
+        .call(text_display);
+	
+	// Define the div for the tooltip
+	var div = d3.select("body").append("div")	
+    .attr("class", "tooltip")				
+    .style("opacity", 0);
+		
+	g.selectAll('.parent')
+		.on("mouseover", function(d) {	
+			if (this.nextSibling.style.display == 'none') {
+				div.transition()		
+					.duration(100)		
+					.style("opacity", .9);		
+				div.html(d.name)	
+					.style("left", function(d) { return (d3.event.target.getBoundingClientRect().left) + "px"} )		
+					.style("top", function(d) { return (d3.event.target.getBoundingClientRect().top - 28) + "px"});	
+				}
+            })	
+	
+        .on("mouseout", function(d) {		
+            div.transition()		
+                .duration(100)		
+                .style("opacity", 0);
+		});
+
+    function transition(d) {
+      if (transitioning || !d) return;
+      transitioning = true;
+	  
+
+      var g2 = display(d);
+	  
+      var t1 = g1.transition().duration(750),
+          t2 = g2.transition().duration(750);
+
+      // Update the domain only after entering new elements.
+      x.domain([d.x, d.x + d.dx]);
+      y.domain([d.y, d.y + d.dy]);
+
+      // Enable anti-aliasing during the transition.
+      svg.style("shape-rendering", null);
+
+      // Draw child nodes on top of parent nodes.
+      svg.selectAll(".depth").sort(function(a, b) { return a.depth - b.depth; });
+
+      // Fade-in entering text.
+      g2.selectAll("text").style("fill-opacity", 0);
+	  g2.selectAll(".child").style("fill-opacity", 0);
+
+      // Transition to the new view.
+      t1.selectAll("text").call(text_center).style("fill-opacity", 0);
+      t2.selectAll("text").call(text_center).call(text_display).style("fill-opacity", 1);
+	  	  
+	  t1.selectAll(".child").style("fill-opacity", 0);
+	  t2.selectAll(".child").style("fill-opacity", 0.5);
+	  
+      t1.selectAll("rect").call(rect);
+      t2.selectAll("rect").call(rect);
+
+      // Remove the old node when the transition is finished.
+      t1.remove().each("end", function() {
+        svg.style("shape-rendering", "crispEdges");
+        transitioning = false;
+		t1.selectAll("text").call(text_display);
+		t2.selectAll("text").call(text_display);
+      });	  
+    }
+
+    return g;
+  }
+
+  function text_topleft(text) {
+    text.attr("dy", ".75em")
+		.attr("x", function(d) { return x(d.x) + 6; })
+		.attr("y", function(d) { return y(d.y) + 6; });
+  }
+  
+  function text_center(text) {
+    text.attr("x", function(d) { 
+						return x(d.x) + getRectWidth(d)/2; 
+					})
+        .attr("y", function(d) { return y(d.y) + getRectHeight(d)/2; })
+		.attr("text-anchor", "middle")
+        //.attr("dx", function(d) { return -this.clientWidth/2; })
+        .attr("dy", function(d) { return 4; })
+        //.attr("dy", function(d) { return 0; /*this.clientHeight/2; */ });
+  }
+  
+  function text_display(text) {
+    text.style('display', function(d) {
+			var isHidden = (this.style.display == 'none');
+			this.style.display = 'block';
+			var shouldBeShown = ((this.clientWidth + 8) < getRectWidth(d)) && ((this.clientHeight + 4) < getRectHeight(d));
+			if (isHidden) { this.style.display = 'none'; }
+			if (shouldBeShown) {
+				return 'block';
+			} else {
+				return 'none';
+			}
+		})
+  }
+
+  function rect(rect) {
+	
+    rect.attr("x", function(d) { return x(d.x); })
+        .attr("y", function(d) { return y(d.y); })
+        .attr("width", getRectWidth)
+        .attr("height", getRectHeight);
+  }
+
+  function name(d) {
+    return d.parent
+        ? name(d.parent) + "." + d.name
+        : d.name;
+  }
+  
+  function getRectWidth(d) {
+	return x(d.x + d.dx) - x(d.x);
+  }
+  
+  function getRectHeight(d) {
+	return y(d.y + d.dy) - y(d.y);
+  }
+  
+</script>
+
