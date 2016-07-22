@@ -15,8 +15,7 @@ svg {
 
 div.tooltip {	
     position: absolute;			
-    text-align: center;						
-    height: 28px;				
+    text-align: center;				
     font: 12px sans-serif;		
     background: #cdcdef;	
     color: #444444;	
@@ -66,12 +65,15 @@ rect.parent,
 }
 
 rect.parent {
-	fill: white;
-	fill-opacity: 0;
+	fill-opacity: .5;
 }
 
 rect.child {
-  fill-opacity: .5;
+	fill-opacity: 0;
+}
+
+.children:hover rect.parent {
+  fill-opacity: 0 !important;
 }
 
 .children:hover rect.child {
@@ -290,6 +292,7 @@ grandparent.append("text")
         .attr("class", "parent")
         .call(rect)
       //.append("title")
+		.style("fill", function(d) { return color(d.sentiment) ; })
         .text(function(d) { return formatNumber(d.value); });
 
     g.append("text")
@@ -315,8 +318,8 @@ grandparent.append("text")
 					.duration(100)		
 					.style("opacity", .9);		
 				div.html(d.name)	
-					.style("left", function(d) { return (d3.event.target.getBoundingClientRect().left) + "px"} )		
-					.style("top", function(d) { return (d3.event.target.getBoundingClientRect().top - 28) + "px"});	
+					.style("left", getPosition(d3.event.target).left + "px" )		
+					.style("top", getPosition(d3.event.target).bottom + "px");	
 				}
             })	
 	
@@ -326,6 +329,34 @@ grandparent.append("text")
                 .style("opacity", 0);
 		});
 
+		
+	// Helper function to get an element's exact position
+	function getPosition(elem) {
+		// (1)
+		var box = elem.getBoundingClientRect()
+		 
+		var body = document.body
+		var docElem = document.documentElement
+		 
+		// (2)
+		var scrollTop = window.pageYOffset || docElem.scrollTop || body.scrollTop
+		var scrollLeft = window.pageXOffset || docElem.scrollLeft || body.scrollLeft
+		 
+		// (3)
+		var clientTop = docElem.clientTop || body.clientTop || 0
+		var clientLeft = docElem.clientLeft || body.clientLeft || 0
+		 
+		// (4)
+		var top  = box.top +  scrollTop - clientTop
+		var bottom  = box.bottom +  scrollTop - clientTop
+		var left = box.left + scrollLeft - clientLeft
+		var right = box.right + scrollLeft - clientLeft
+		 
+		return { top: Math.round(top), left: Math.round(left), right: Math.round(right), bottom: Math.round(bottom) }
+	}
+
+		
+		
     function transition(d) {
       if (transitioning || !d) return;
       transitioning = true;
@@ -349,13 +380,17 @@ grandparent.append("text")
       // Fade-in entering text.
       g2.selectAll("text").style("fill-opacity", 0);
 	  g2.selectAll(".child").style("fill-opacity", 0);
+	  g2.selectAll(".parent").style("fill-opacity", 0);
 
       // Transition to the new view.
       t1.selectAll("text").call(text_center).style("fill-opacity", 0);
       t2.selectAll("text").call(text_center).call(text_display).style("fill-opacity", 1);
 	  	  
 	  t1.selectAll(".child").style("fill-opacity", 0);
-	  t2.selectAll(".child").style("fill-opacity", 0.5);
+	  t2.selectAll(".child").style("fill-opacity", 0);
+	  
+	  t1.selectAll(".parent").style("fill-opacity", 0);
+	  t2.selectAll(".parent").style("fill-opacity", 0.5);
 	  
       t1.selectAll("rect").call(rect);
       t2.selectAll("rect").call(rect);
