@@ -18,7 +18,7 @@ div.tooltip {
     text-align: center;				
     font: 12px sans-serif;		
     background: #cdcdef;	
-    color: #444444;	
+    color: #000000;	
     border: 0px;				
     pointer-events: none;			
 	padding: 8px;
@@ -116,6 +116,7 @@ function SetUpHierarchy(node, parent) {
 		index = rowheaders[node.id].index;
 		node.sentiment = +rows[index].children[2].innerText;
 	}
+	node.name = reverseEscapeEntities(node.name);
 	if (node.children.length > 0) {
 		node.value = undefined;
 		for (var i = 0; i < node.children.length; i++) {
@@ -127,6 +128,19 @@ function SetUpHierarchy(node, parent) {
 		node.children = undefined;
 	}	
 }
+
+function reverseEscapeEntities(str) {
+        var entitiesMap = {
+            '&lt;' : '<',
+            '&gt;' : '>',
+            '&amp;' : '&',
+            '\\&quot;' : '\"',
+            '&amp;apos;' : '\''
+        };
+        return str.replace(/&lt;|&gt;|&amp;|\\&quot;|&amp;apos;/g, function(key) {
+            return entitiesMap[key];
+        });
+    }
 
 var margin = {top: 20, right: 0, bottom: 0, left: 0},
     width = 1060,
