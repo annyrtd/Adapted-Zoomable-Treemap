@@ -89,6 +89,10 @@ rect.child {
   fill-opacity: .9 !important;
 }
 
+.children:hover text {
+  font-weight: bold;
+}
+
 text:hover {
 	cursor: pointer;
 	font-weight: bold;
@@ -103,71 +107,26 @@ text:hover {
 <script>
 var root = { name: 'Themes', children: hierarchy};
 var rows = document.querySelectorAll('#confirmit_agg_table tbody tr');
-//AddSize(root);
-AddValue(root);
-AddSentiment(root);
-AddParent(root);
-RemoveEmptyChildren(root);
+SetUpHierarchy(root);
 
-function AddSize(node) {
-	if (node.children.length > 0) {
-		node.size = undefined;
-		for (var i = 0; i < node.children.length; i++) {
-			AddSize(node.children[i])
-		}
-	} else {
-		var index = rowheaders[node.id].index;
-		node.size = +rows[index].children[3].innerText;
-	}	
-}
-
-function AddValue(node) {
+function SetUpHierarchy(node, parent) {
+	var index = 0;
+	if (node != root)
+	{
+		index = rowheaders[node.id].index;
+		node.sentiment = +rows[index].children[2].innerText;
+	}
 	if (node.children.length > 0) {
 		node.value = undefined;
 		for (var i = 0; i < node.children.length; i++) {
-			AddValue(node.children[i])
+			SetUpHierarchy(node.children[i], node)
 		}
-	} else {
-		var index = rowheaders[node.id].index;
+	} else {		
 		node.value = +rows[index].children[3].innerText;
-	}	
-}
-
-
-function AddSentiment(node) {
-	if (node.children.length > 0) {
-		for (var i = 0; i < node.children.length; i++) {
-			AddSentiment(node.children[i])
-		}
-	}
-	if (node != root)
-	{
-		var index = rowheaders[node.id].index;
-		node.sentiment = +rows[index].children[2].innerText;
-	}
-}
-
-function AddParent(node, parent) {
-	if (node.children.length > 0) {
-		for (var i = 0; i < node.children.length; i++) {
-			AddParent(node.children[i], node)
-		}
-	} else {
 		node.parent = parent;
-	}	
-}
-
-function RemoveEmptyChildren(node) {
-	if (node.children.length > 0) {
-		for (var i = 0; i < node.children.length; i++) {
-			RemoveEmptyChildren(node.children[i])
-		}
-	} else {
 		node.children = undefined;
 	}	
 }
-
-
 
 var margin = {top: 20, right: 0, bottom: 0, left: 0},
     width = 1060,
@@ -297,13 +256,12 @@ grandparent.append("text")
 		.style("fill", function(d) { return this.parentNode.classList.contains('children') ? color(d.parent.sentiment) :  color(d.sentiment) ; })
         .call(rect);
 
-    g.append("rect")
+    var parentSelection = g.append("rect")
         .attr("class", "parent")
         .call(rect)
-      //.append("title")
 		.style("fill", function(d) { return color(d.sentiment) ; })
         .text(function(d) { return formatNumber(d.value); });
-
+		
     g.append("text")
         .text(function(d) { return d.name; })
 		.on("click", function(d) { 
@@ -314,6 +272,15 @@ grandparent.append("text")
 		})
         .call(text_center)
         .call(text_display);
+		
+	parentSelection
+		.on("click", function(d) { 
+			if (!this.parentNode.classList.contains('children') && this.nextSibling.style.display == 'none') {
+				var index = rowheaders[d.id].index;
+				rows[index].children[0].children[0].click();
+			} 
+		});
+	
 	
 	// Define the div for the tooltip
 	var div = d3.select("body").append("div")	
@@ -326,7 +293,7 @@ grandparent.append("text")
 		
 	g.selectAll('.parent')
 		.on("mouseover", function(d) {	
-			if (this.nextSibling.style.display == 'none') {
+			if (this.nextSibling.style.display == 'none' && !transitioning) {
 				div.html(d.name);
 				console.log("width of div: " + div[0][0].clientWidth)
 				div.transition()		
@@ -347,9 +314,10 @@ grandparent.append("text")
 					.style("opacity", .9);		
 				arrow.style("left", (leftPosition + (parentRectWidth - arrowWidth)/2) + "px" )		
 					.style("top", bottomPosition + "px");	
-				}
-            })	
-	
+					
+				this.style.cursor = "pointer";
+			}
+		})		
         .on("mouseout", function(d) {		
             div.transition()		
                 .duration(100)		
@@ -358,6 +326,8 @@ grandparent.append("text")
 			arrow.transition()		
                 .duration(100)		
                 .style("opacity", 0);
+				
+			this.style.cursor = undefined;
 		});
 
 		
