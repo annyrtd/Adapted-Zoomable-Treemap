@@ -24,6 +24,15 @@ div.tooltip {
 	padding: 8px;
 }
 
+.arrow-up {
+  position: absolute;		
+  pointer-events: none;	
+  width: 0; 
+  height: 0; 
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;  
+  border-bottom: 7px solid #cdcdef;
+}
 
 #treemap {
   margin: 8px;
@@ -310,21 +319,43 @@ grandparent.append("text")
 	var div = d3.select("body").append("div")	
     .attr("class", "tooltip")				
     .style("opacity", 0);
+	
+	var arrow = d3.select('body').append("div")	
+    .attr("class", "arrow-up")				
+    .style("opacity", 0);
 		
 	g.selectAll('.parent')
 		.on("mouseover", function(d) {	
 			if (this.nextSibling.style.display == 'none') {
+				div.html(d.name);
+				console.log("width of div: " + div[0][0].clientWidth)
 				div.transition()		
 					.duration(100)		
 					.style("opacity", .9);		
-				div.html(d.name)	
-					.style("left", getPosition(d3.event.target).left + "px" )		
-					.style("top", getPosition(d3.event.target).bottom + "px");	
+
+				var parentRectWidth = +d3.event.target.attributes.width.value;
+				var divWidth = +div[0][0].clientWidth;
+				var arrowWidth = +arrow[0][0].offsetWidth;
+				var arrowHeight = +arrow[0][0].offsetHeight;
+				var leftPosition = +getPosition(d3.event.target).left;
+				var bottomPosition = +getPosition(d3.event.target).bottom;
+				
+				div.style("left", (leftPosition + (parentRectWidth - divWidth)/2) + "px" )		
+					.style("top", (bottomPosition + arrowHeight) + "px");	
+				arrow.transition()		
+					.duration(100)		
+					.style("opacity", .9);		
+				arrow.style("left", (leftPosition + (parentRectWidth - arrowWidth)/2) + "px" )		
+					.style("top", bottomPosition + "px");	
 				}
             })	
 	
         .on("mouseout", function(d) {		
             div.transition()		
+                .duration(100)		
+                .style("opacity", 0);
+				
+			arrow.transition()		
                 .duration(100)		
                 .style("opacity", 0);
 		});
