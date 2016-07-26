@@ -1,5 +1,4 @@
-<confirmit:wysiwygcomponent type="LanguageText" id="9ac9bc43-89cc-46f2-9a95-797f3d31c0d8" />
-<confirmit:wysiwygcomponent type="AggregatedTable" id="4ce7bc0b-c96f-4e93-8a84-e22327ea71d0" />
+<confirmit:wysiwygcomponent type="LanguageText" id="0218af71-eab9-4dfd-b8be-854444319f92" /><confirmit:wysiwygcomponent type="AggregatedTable" id="0c7f6d41-db7c-4120-9640-de0844f802d3" />
 <div id="treemap"></div>
 
 <style>
@@ -128,13 +127,13 @@ function SetUpHierarchy(node, parent) {
 
 function reverseEscapeEntities(str) {
         var entitiesMap = {
-            '&lt;' : '<',
+           '&lt;' : '<',
             '&gt;' : '>',
             '&amp;' : '&',
             '\\&quot;' : '\"',
             "&amp;apos;" : "'"
         };
-        return str.replace(/&lt;|&gt;|&amp;|\\&quot;|&amp;apos;/g, function(key) {
+		return str.replace(/&lt;|&gt;|&amp;|\\&quot;|&amp;apos;/g, function(key) {
             return entitiesMap[key];
         });
     }
@@ -193,7 +192,7 @@ grandparent.append("text")
     .attr("y", 6 - margin.top)
     .attr("dy", ".75em");
 
-  // Define the div for the tooltip
+	// Define the div for the tooltip
 	var div = d3.select("body").append("div")	
     .attr("class", "tooltip")				
     .style("opacity", 0);
@@ -201,7 +200,7 @@ grandparent.append("text")
 	var arrow = d3.select('body').append("div")	
     .attr("class", "arrow-up")				
     .style("opacity", 0);
-	
+
 	
   initialize(root);
   accumulate(root);
@@ -273,7 +272,7 @@ grandparent.append("text")
         .data(function(d) { return d._children || [d]; })
       .enter().append("rect")
         .attr("class", "child")
-		.style("fill", function(d) { return this.parentNode.classList.contains('children') ? color(d.parent.sentiment) :  color(d.sentiment) ; })
+		.style("fill", function(d) { return this.parentNode.className.baseVal.indexOf('children') >= 0 ? color(d.parent.sentiment) :  color(d.sentiment) ; })
         .call(rect);
 
     var parentSelection = g.append("rect")
@@ -285,7 +284,7 @@ grandparent.append("text")
     g.append("text")
         .text(function(d) { return d.name; })
 		.on("click", function(d) { 
-			if (!this.parentNode.classList.contains('children')) {
+			if (this.parentNode.className.baseVal.indexOf('children') < 0) {
 				var index = rowheaders[d.id].index;
 				rows[index].children[0].children[0].click();
 			} 
@@ -295,26 +294,26 @@ grandparent.append("text")
 		
 	parentSelection
 		.on("click", function(d) { 
-			if (!this.parentNode.classList.contains('children') && this.nextSibling.style.display == 'none') {
+			if (this.parentNode.className.baseVal.indexOf('children') < 0 && this.nextSibling.style.display == 'none') {
 				var index = rowheaders[d.id].index;
 				rows[index].children[0].children[0].click();
 			} 
 		});
 	
 	
-	
+
 		
 	g.selectAll('.parent')
 		.on("mouseover", function(d) {	
 			if (this.nextSibling.style.display == 'none' && !transitioning) {
 				div.html(d.name);
-				console.log("width of div: " + div[0][0].clientWidth)
+				//console.log("width of div: " + div[0][0].scrollWidth)
 				div.transition()		
 					.duration(100)		
 					.style("opacity", .9);		
 
 				var parentRectWidth = +d3.event.target.attributes.width.value;
-				var divWidth = +div[0][0].clientWidth;
+				var divWidth = +div[0][0].scrollWidth;
 				var arrowWidth = +arrow[0][0].offsetWidth;
 				var arrowHeight = +arrow[0][0].offsetHeight;
 				var leftPosition = +getPosition(d3.event.target).left;
@@ -433,16 +432,16 @@ grandparent.append("text")
 					})
         .attr("y", function(d) { return y(d.y) + getRectHeight(d)/2; })
 		.attr("text-anchor", "middle")
-        //.attr("dx", function(d) { return -this.clientWidth/2; })
+        //.attr("dx", function(d) { return -this.scrollWidth/2; })
         .attr("dy", function(d) { return 4; })
-        //.attr("dy", function(d) { return 0; /*this.clientHeight/2; */ });
+        //.attr("dy", function(d) { return 0; /*this.scrollHeight/2; */ });
   }
   
   function text_display(text) {
     text.style('display', function(d) {
 			var isHidden = (this.style.display == 'none');
 			this.style.display = 'block';
-			var shouldBeShown = ((this.clientWidth + 8) < getRectWidth(d)) && ((this.clientHeight + 4) < getRectHeight(d));
+			var shouldBeShown = ((this.scrollWidth + 8) < getRectWidth(d)) && ((this.scrollHeight + 4) < getRectHeight(d));
 			if (isHidden) { this.style.display = 'none'; }
 			if (shouldBeShown) {
 				return 'block';
