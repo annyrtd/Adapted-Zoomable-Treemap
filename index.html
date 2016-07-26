@@ -89,9 +89,6 @@ rect.child {
   fill-opacity: .9 !important;
 }
 
-.children:hover text {
-  font-weight: bold;
-}
 
 text:hover {
 	cursor: pointer;
@@ -114,7 +111,7 @@ function SetUpHierarchy(node, parent) {
 	if (node != root)
 	{
 		index = rowheaders[node.id].index;
-		node.sentiment = +rows[index].children[2].innerText;
+		node.sentiment = +rows[index].children[1].innerText;
 	}
 	node.name = reverseEscapeEntities(node.name);
 	if (node.children.length > 0) {
@@ -123,7 +120,7 @@ function SetUpHierarchy(node, parent) {
 			SetUpHierarchy(node.children[i], node)
 		}
 	} else {		
-		node.value = +rows[index].children[3].innerText;
+		node.value = +rows[index].children[2].innerText;
 		node.parent = parent;
 		node.children = undefined;
 	}	
@@ -135,7 +132,7 @@ function reverseEscapeEntities(str) {
             '&gt;' : '>',
             '&amp;' : '&',
             '\\&quot;' : '\"',
-            '&amp;apos;' : '\''
+            "&amp;apos;" : "'"
         };
         return str.replace(/&lt;|&gt;|&amp;|\\&quot;|&amp;apos;/g, function(key) {
             return entitiesMap[key];
@@ -196,6 +193,15 @@ grandparent.append("text")
     .attr("y", 6 - margin.top)
     .attr("dy", ".75em");
 
+  // Define the div for the tooltip
+	var div = d3.select("body").append("div")	
+    .attr("class", "tooltip")				
+    .style("opacity", 0);
+	
+	var arrow = d3.select('body').append("div")	
+    .attr("class", "arrow-up")				
+    .style("opacity", 0);
+	
 	
   initialize(root);
   accumulate(root);
@@ -296,14 +302,7 @@ grandparent.append("text")
 		});
 	
 	
-	// Define the div for the tooltip
-	var div = d3.select("body").append("div")	
-    .attr("class", "tooltip")				
-    .style("opacity", 0);
 	
-	var arrow = d3.select('body').append("div")	
-    .attr("class", "arrow-up")				
-    .style("opacity", 0);
 		
 	g.selectAll('.parent')
 		.on("mouseover", function(d) {	
