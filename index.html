@@ -108,7 +108,6 @@ function detectFirefox() {
 
 function detectIE() {
   var ua = window.navigator.userAgent;
-  console.log(ua);
 
   // Test values; Uncomment to check result …
 
@@ -362,7 +361,6 @@ grandparent.append("text")
 		.on("mouseover", function(d) {	
 			if (this.nextSibling.style.display == 'none' && !transitioning) {
 				div.html(d.name);
-				//console.log("width of div: " + div[0][0].scrollWidth)
 				div.transition()		
 					.duration(100)		
 					.style("opacity", 0.9);		
@@ -498,7 +496,6 @@ grandparent.append("text")
   function text_display(text) {
     text.style('display', function(d) {
 			var isHidden = (this.style.display == 'none');
-			console.log(this);
 			this.style.display = 'block';
 			var shouldBeShown = ((this.scrollWidth + 8) < getRectWidth(d)) && ((this.scrollHeight + 4) < getRectHeight(d));
 			
