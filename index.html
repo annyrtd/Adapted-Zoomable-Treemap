@@ -40,6 +40,7 @@ div.tooltip {
   margin-top: 40px;
   width: 1060px;
   height: 600px;
+  overflow: hidden;
 }
 
 .children text {
@@ -75,7 +76,7 @@ rect.parent,
 }
 
 rect.parent {
-	fill-opacity: .5;
+	fill-opacity: 0.5;
 }
 
 rect.child {
@@ -93,7 +94,7 @@ html[data-useragent='notie'] .children:hover rect.parent {
 }
 
 html[data-useragent='notie'] .children:hover rect.child {
-  fill-opacity: .9 !important;
+  fill-opacity: 0.9 !important;
 }
 
 </style>
@@ -359,7 +360,7 @@ grandparent.append("text")
 				//console.log("width of div: " + div[0][0].scrollWidth)
 				div.transition()		
 					.duration(100)		
-					.style("opacity", .9);		
+					.style("opacity", 0.9);		
 
 				var parentRectWidth = +d3.event.target.attributes.width.value;
 				var divWidth = +div[0][0].scrollWidth;
@@ -372,7 +373,7 @@ grandparent.append("text")
 					.style("top", (bottomPosition + arrowHeight) + "px");	
 				arrow.transition()		
 					.duration(100)		
-					.style("opacity", .9);		
+					.style("opacity", 0.9);		
 				arrow.style("left", (leftPosition + (parentRectWidth - arrowWidth)/2) + "px" )		
 					.style("top", bottomPosition + "px");	
 					
@@ -441,7 +442,10 @@ grandparent.append("text")
 
       // Fade-in entering text.
       g2.selectAll("text").style("fill-opacity", 0);
+	  
+	  g1.selectAll(".child").style("fill-opacity", 0);
 	  g2.selectAll(".child").style("fill-opacity", 0);
+	  
 	  g2.selectAll(".parent").style("fill-opacity", 0);
 
       // Transition to the new view.
