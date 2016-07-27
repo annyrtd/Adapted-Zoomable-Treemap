@@ -38,8 +38,6 @@ div.tooltip {
 #treemap {
   margin: 8px;
   margin-top: 40px;
-  width: 1060px;
-  height: 600px;
   overflow: hidden;
   background: white;
 }
@@ -103,8 +101,14 @@ html[data-useragent='notie'] .children:hover rect.child {
 <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
 
 <script>
+
+function detectFirefox() {
+	return navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+}
+
 function detectIE() {
   var ua = window.navigator.userAgent;
+  console.log(ua);
 
   // Test values; Uncomment to check result …
 
@@ -147,7 +151,7 @@ function detectIE() {
 }
 
 var doc = document.documentElement;
-if (!detectIE()) {
+if (!detectIE() && !detectFirefox()) {
 	doc.setAttribute('data-useragent', 'notie');
 }
 
@@ -494,8 +498,14 @@ grandparent.append("text")
   function text_display(text) {
     text.style('display', function(d) {
 			var isHidden = (this.style.display == 'none');
+			console.log(this);
 			this.style.display = 'block';
 			var shouldBeShown = ((this.scrollWidth + 8) < getRectWidth(d)) && ((this.scrollHeight + 4) < getRectHeight(d));
+			
+			if (detectFirefox()) {
+				shouldBeShown = ((this.firstChild.length*6.5 + 8) < getRectWidth(d)) && (18 < getRectHeight(d));			
+			}
+			
 			if (isHidden) { this.style.display = 'none'; }
 			if (shouldBeShown) {
 				return 'block';
