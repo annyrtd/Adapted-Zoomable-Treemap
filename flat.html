@@ -140,19 +140,76 @@ function ScanTables(selector) {
 	return cells;	
 }
 
+function rand(min, max){
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function generateShades(hue){
+  var hsl = "hsl("+hue+", "+ rand(40,80) +"%, "+rand(30, 70) +"%)";  
+  return hsl;
+}
+
+function GetRandomColor(color, range) {
+	var red = color.substr(0,2);
+	var green = color.substr(2,2);
+	var blue = color.substr(4,2);
+		
+	var redrand = GetRandomColorComponent(red, range);
+	var greenrand = GetRandomColorComponent(green, range);
+	var bluerand = GetRandomColorComponent(blue, range);
+		
+	var c = redrand + greenrand + bluerand;
+	return c;	
+}
+	
+function GetRandomColorComponent(component, range) {
+	if (!component || Number.isNaN(parseInt(component, 16))) {
+		return Math.floor(Math.random()*255).toString(16);
+	}	
+	
+	var number = parseInt(component, 16);
+	var result, startNumber = 0;
+
+	if (number - range/2 <= 0) {
+		startNumber = 0;
+	} else {
+		if (number + range/2 >= 255) {
+			startNumber = 255 - range;
+		} else {
+			startNumber = number - range/2;
+		}
+	}
+	
+	result = Pad((startNumber + Math.floor(Math.random()*range)).toString(16), 2);
+	
+	return result;
+}
+
+function Pad(num, size) 
+{
+    var s = num+"";
+    while (s.length < size) s = "0" + s;
+    return s;
+}  
+
+
 function CreateTreemap(cells, id, config) {
 
 	var cellsColor = config.CellsColor ? config.CellsColor.replace(/#/g, '') : 'FEF62F';
 	var shadeRange = (config.ShadeRange && !Number.isNaN(parseInt(config.ShadeRange)) && (+config.ShadeRange) >= 0 && (+config.ShadeRange) <= 100) ? (2*Math.floor(255*parseInt(config.ShadeRange)/200)) : 50;
 	var treemapTitle = config.TreemapTitle ? config.TreemapTitle : 'Answers';
 	var root = { name: treemapTitle, children: cells };
+	var hue = (config.Hue && !Number.isNaN(parseInt(config.Hue)) && (+config.Hue) >= 0 && (+config.Hue) <= 360) ? config.Hue : 60;
+	
+
 	
 	var margin = {top: 20, right: 0, bottom: 0, left: 0},
     formatNumber = d3.format(",d"),
     transitioning,
 	func = d3.scale.category20c(),
 	color = function() {		
-		return GetRandomColor(cellsColor, shadeRange);
+		return generateShades(hue);
+		/*return GetRandomColor(cellsColor, shadeRange);*/
 	};
 	
 	var width = (config.Width && !Number.isNaN(parseInt(config.Width)) && (+config.Width) >= 0 && (+config.Width) <= 1000) ? config.Width : 500;
@@ -215,48 +272,6 @@ function CreateTreemap(cells, id, config) {
   display(root);
 
 	
-function GetRandomColor(color, range) {
-	var red = color.substr(0,2);
-	var green = color.substr(2,2);
-	var blue = color.substr(4,2);
-		
-	var redrand = GetRandomColorComponent(red, range);
-	var greenrand = GetRandomColorComponent(green, range);
-	var bluerand = GetRandomColorComponent(blue, range);
-		
-	var c = redrand + greenrand + bluerand;
-	return c;	
-}
-	
-function GetRandomColorComponent(component, range) {
-	if (!component || Number.isNaN(parseInt(component, 16))) {
-		return Math.floor(Math.random()*255).toString(16);
-	}	
-	
-	var number = parseInt(component, 16);
-	var result, startNumber = 0;
-
-	if (number - range/2 <= 0) {
-		startNumber = 0;
-	} else {
-		if (number + range/2 >= 255) {
-			startNumber = 255 - range;
-		} else {
-			startNumber = number - range/2;
-		}
-	}
-	
-	result = Pad((startNumber + Math.floor(Math.random()*range)).toString(16), 2);
-	
-	return result;
-}
-
-function Pad(num, size) 
-{
-    var s = num+"";
-    while (s.length < size) s = "0" + s;
-    return s;
-}  
 
   function initialize(root) {
     root.x = root.y = 0;
@@ -526,15 +541,15 @@ if (!detectIE() && !detectFirefox()) {
 <table style="width:100%;">
   <tbody>
     <tr>
-      <td><confirmit:wysiwygcomponent type="AggregatedTable" id="7b420ac5-47d1-448c-b721-5d05b1fe1c05" /></td>
+      <td class="treemapTable"><confirmit:wysiwygcomponent type="AggregatedTable" id="7b420ac5-47d1-448c-b721-5d05b1fe1c05" /></td>
       <td><div class="treemap" id="treemap"></div></td>
     </tr>
     <tr>
-      <td><confirmit:wysiwygcomponent type="AggregatedTable" id="989f7dac-5688-491b-9e4b-4130456b6d0e" /></td>
+      <td class="treemapTable"><confirmit:wysiwygcomponent type="AggregatedTable" id="989f7dac-5688-491b-9e4b-4130456b6d0e" /></td>
       <td><div class="treemap" id="treemap2"></div></td>
     </tr>
 	<tr>
-      <td></td>
+      <td class="treemapTable"><confirmit:wysiwygcomponent type="AggregatedTable" id="da775cc7-910e-4998-9c52-3f0001e2628f" /></td>
       <td><div class="treemap" id="treemap3"></div></td>
     </tr>
   </tbody>
@@ -564,6 +579,19 @@ Config:
 	
  - Height - height of chart
 	*** default : 350 ***
+	
+	  <option value="0"> RED</option>
+      <option value="30">ORANGE</option>
+      <option value="60">YELLOW</option>
+      <option value="90">CHARTREUSE GREEN</option>
+      <option value="120">GREEN</option>
+      <option value="150">TURQUOISE</option>
+      <option value="180">CYAN</option>
+      <option value="210">AZURE</option>
+      <option value="240">BLUE</option>
+      <option value="270">VIOLET</option>
+      <option value="300">MAGENTA</option>
+      <option value="330">ROSE</option>
 
 ***********/
 
@@ -573,14 +601,16 @@ var config = [
 		ShadeRange: 20, 
 		TreemapTitle: 'Age range', 
 		Height: 320, 
-		Width: 550
+		Width: 550, 
+		Hue: 180
 	}, 
 	{
 		CellsColor: '#FF9218', 
 		ShadeRange: 40, 
 		TreemapTitle: 'Gender/Member', 
 		Height: 256, 
-		Width: 550
+		Width: 550,
+		Hue: 0
 	}, 
 	{
 		
