@@ -1,0 +1,111 @@
+<table style="width:100%;">
+  <tbody>
+    <tr>
+      <td class="treemapTable"><confirmit:wysiwygcomponent type="AggregatedTable" id="7b420ac5-47d1-448c-b721-5d05b1fe1c05" /></td>
+      <td><div class="treemap" id="treemap"></div></td>
+    </tr>
+    <tr>
+      <td class="treemapTable"><confirmit:wysiwygcomponent type="AggregatedTable" id="989f7dac-5688-491b-9e4b-4130456b6d0e" /></td>
+      <td><div class="treemap" id="treemap2"></div></td>
+    </tr>
+	<tr>
+      <td class="treemapTable"><confirmit:wysiwygcomponent type="AggregatedTable" id="da775cc7-910e-4998-9c52-3f0001e2628f" /></td>
+      <td><div class="treemap" id="treemap3"></div></td>
+    </tr>
+  </tbody>
+</table>
+<confirmit:wysiwygcomponent type="LanguageText" id="d026323b-53ca-4064-9d37-059f0a740829" />
+
+
+
+
+<script>
+/***********
+Config: 
+ - CellsColor - main color of cells 
+	*** default: 'FEF62F' ***
+	
+ - ShadeRange - percentage of color deviation - from 0 to 100 
+ (when 0, all cells has the same color, 
+  when 100 - complete random, 
+  when between - colors vary around the main CellsColor )
+	*** default: 20 ***
+	
+ - TreemapTitle - chart title 
+	*** default : 'Answers' ***
+	
+ - Width - width of chart
+	*** default : 500 ***
+	
+ - Height - height of chart
+	*** default : 350 ***
+	
+ - Hue - color shade - from 0 to 360 
+	*** default : 60 ***
+	Some intermediate values:
+	0: RED
+    30: ORANGE
+    60: YELLOW
+    90: CHARTREUSE GREEN
+    120: GREEN
+    150: TURQUOISE
+    180: CYAN
+    210: AZURE
+    240: BLUE
+    270: VIOLET
+    300: MAGENTA
+    330: ROSE
+
+***********/
+
+var config = [
+{
+		CellsColor: '#2F56E4', 
+		ShadeRange: 20, 
+		TreemapTitle: 'Age range', 
+		Height: 287, 
+		Width: 550, 
+		Hue: 180,
+		ValueColumnNumber: 2,
+		ShowValue: true,
+		TooltipInfo: [
+			{
+				ColumnNumber: 1,
+				Name: 'Respondents'
+			},
+			{
+				ColumnNumber: 3
+			},
+			{
+				ColumnNumber: 4
+			}
+		]
+	}, 
+	{
+		CellsColor: '#FF9218', 
+		ShadeRange: 40, 
+		TreemapTitle: 'Gender/Member', 
+		Height: 284, 
+		Width: 550,
+		Hue: 3,
+		TooltipInfo: [
+			{
+				ColumnNumber: 2
+			},
+			{
+				ColumnNumber: 3
+			}
+		]
+	}, 
+	{		
+	}
+]; 
+
+var cells = ScanTables('.treemapTable', config);
+var ids = ['#treemap', '#treemap2', '#treemap3'];
+
+for (var i = 0; i < cells.length; i++) {
+	CreateTreemap(cells[i], ids[i], config[i]);
+}  
+</script>
+
