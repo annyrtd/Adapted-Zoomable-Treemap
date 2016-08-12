@@ -13,7 +13,6 @@ div.tooltip {
 	position: absolute;
 	text-align: center;
 	font: 12px sans-serif;
-	background: #cdcdef;
 	color: #000000;
 	border: 0px;
 	pointer-events: none;
@@ -27,7 +26,7 @@ div.tooltip {
 	height: 0;
 	border-left: 7px solid transparent;
 	border-right: 7px solid transparent;
-	border-bottom: 7px solid #cdcdef;
+	border-bottom: 7px solid #CCCCCC;
 }
 
 .treemap {
@@ -35,7 +34,7 @@ div.tooltip {
 	background: white;
 }
 
-.children text {
+text {
 	pointer-events: none;
 }
 
@@ -116,7 +115,7 @@ function detectIE() {
 	return false;
 }
 
-function ScanTables(selector) {
+function ScanTables(selector, config) {
 	
 	var items = document.querySelectorAll(selector + ' table');
 
@@ -129,23 +128,65 @@ function ScanTables(selector) {
 	for (var i = 0; i < items.length; i++) {
 		cells[i] = [];
 		rows = items[i].querySelectorAll('tbody tr');
+		
 		for (var j = 0; j < rows.length; j++) {
+		
+			var valueColumnNumber = (
+					config[i]
+					&& config[i].ValueColumnNumber 
+					&& !Number.isNaN(parseInt(config[i].ValueColumnNumber)) 
+					&& (+config[i].ValueColumnNumber) > 0 
+					&& (+config[i].ValueColumnNumber) < rows[j].children.length
+				) 
+				? config[i].ValueColumnNumber 
+				: 1;
+
 			cells[i][j] = {
 				name: rows[j].children[0].innerText, 
-				value: rows[j].children[1].innerText
+				value: rows[j].children[valueColumnNumber].innerText
 			};
+			
+			if (config[i] && config[i].TooltipInfo) {
+				var data = config[i].TooltipInfo;
+				var info = cells[i][j].info = {};
+				
+				for (var k = 0; k < data.length; k++) {
+					var datum = data[k];
+					var colNumber = datum.ColumnNumber 
+						&& !Number.isNaN(parseInt(datum.ColumnNumber)) 
+						&& (+datum.ColumnNumber) > 0 
+						&& (+datum.ColumnNumber) < rows[j].children.length 						
+						? datum.ColumnNumber 
+						: undefined;
+						
+					if (!colNumber) 
+						continue;
+					
+					var name = datum.Name ? datum.Name : items[i].querySelectorAll('thead tr')[0].children[colNumber].innerText;
+					var value = rows[j].children[colNumber].innerText;
+					
+					info[name] = value;
+				}
+			}
 		}
 	}
+	
+	console.log(cells);
 	
 	return cells;	
 }
 
 function rand(min, max){
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function generateShades(hue){
-  var hsl = "hsl("+hue+", "+ rand(40,80) +"%, "+rand(30, 70) +"%)";  
+  var hsl = "hsl("+hue+", "+ rand(70,80) +"%, "+rand(45, 80) +"%)";  
+  return hsl;
+}
+
+function generateTooltipBackground(hue){
+  var hsl = "hsl("+hue+", "+ rand(89,95) +"%, "+rand(89, 95) +"%)";  
   return hsl;
 }
 
@@ -195,13 +236,12 @@ function Pad(num, size)
 
 function CreateTreemap(cells, id, config) {
 
-	var cellsColor = config.CellsColor ? config.CellsColor.replace(/#/g, '') : 'FEF62F';
-	var shadeRange = (config.ShadeRange && !Number.isNaN(parseInt(config.ShadeRange)) && (+config.ShadeRange) >= 0 && (+config.ShadeRange) <= 100) ? (2*Math.floor(255*parseInt(config.ShadeRange)/200)) : 50;
-	var treemapTitle = config.TreemapTitle ? config.TreemapTitle : 'Answers';
+	var cellsColor = (config && config.CellsColor) ? config.CellsColor.replace(/#/g, '') : 'FEF62F';
+	var shadeRange = (config && config.ShadeRange && !Number.isNaN(parseInt(config.ShadeRange)) && (+config.ShadeRange) >= 0 && (+config.ShadeRange) <= 100) ? (2*Math.floor(255*parseInt(config.ShadeRange)/200)) : 50;
+	var treemapTitle = (config && config.TreemapTitle) ? config.TreemapTitle : 'Answers';
 	var root = { name: treemapTitle, children: cells };
-	var hue = (config.Hue && !Number.isNaN(parseInt(config.Hue)) && (+config.Hue) >= 0 && (+config.Hue) <= 360) ? config.Hue : 60;
-	
-
+	var hue = (config && config.Hue && !Number.isNaN(parseInt(config.Hue)) && (+config.Hue) >= 0 && (+config.Hue) <= 360) ? config.Hue : 60;
+	var showValue = (config && config.ShowValue) ? true : false;
 	
 	var margin = {top: 20, right: 0, bottom: 0, left: 0},
     formatNumber = d3.format(",d"),
@@ -256,14 +296,18 @@ function CreateTreemap(cells, id, config) {
     .attr("y", 6 - margin.top)
     .attr("dy", ".75em");
 
+	var tooltipColor = generateTooltipBackground(hue);
+	
 	/* Define the div for the tooltip*/
 	var div = d3.select("body").append("div")	
     .attr("class", "tooltip")				
-    .style("opacity", 0);
+    .style("opacity", 0)
+	.style("background", tooltipColor);
 	
 	var arrow = d3.select('body').append("div")	
     .attr("class", "arrow-up")				
-    .style("opacity", 0);
+    .style("opacity", 0)
+	.style('border-bottom-color', tooltipColor);
 
 	
   initialize(root);
@@ -355,11 +399,43 @@ function CreateTreemap(cells, id, config) {
 		
 	g.selectAll('.parent')
 		.on("mouseover", function(d) {	
-			if (this.nextSibling.style.display == 'none' && !transitioning) {
-				div.html(d.name);
+				var txt = '';
+				var info = d.info;	
+				
+				if (this.nextSibling.style.display == 'none' && !transitioning) {
+					txt += '<b>' + d.name + '</b>'; 
+					if (showValue) {
+						txt += '<br>';
+						txt += (getItalicText('Value') + ': ' + d.value);
+					}
+				} else {
+					if (showValue) {
+						txt += (getItalicText('Value') + ': ' + d.value);
+					} else {
+						if (!info) {
+							return;
+						}
+					}					
+				}
+				
+							
+				if (info) {
+					for(var index in info) { 
+						if (info.hasOwnProperty(index)) {
+							var attr = info[index];
+							txt += ('<br>' + getItalicText(index) + ': ' + attr);
+						}
+					}
+				}
+				
+				if (txt.substr(0, 4) == '<br>') {
+					txt = txt.substr(4);
+				}
+				
+				div.html(txt);
 				div.transition()		
 					.duration(100)		
-					.style("opacity", 0.9);		
+					.style("opacity", 1);		
 
 				var parentRectWidth = +d3.event.target.attributes.width.value;
 				var divWidth = +div[0][0].scrollWidth;
@@ -372,10 +448,9 @@ function CreateTreemap(cells, id, config) {
 					.style("top", (bottomPosition + arrowHeight) + "px");	
 				arrow.transition()		
 					.duration(100)		
-					.style("opacity", 0.9);		
+					.style("opacity", 1);		
 				arrow.style("left", (leftPosition + (parentRectWidth - arrowWidth)/2) + "px" )		
 					.style("top", bottomPosition + "px");	
-			}
 		})		
         .on("mouseout", function(d) {		
             div.transition()		
@@ -389,6 +464,10 @@ function CreateTreemap(cells, id, config) {
 			this.style.cursor = undefined;
 		});
 
+		
+	function getItalicText(str) {
+		return '<span style="font-style: italic;">' + str + '</span>' ;
+	}
 		
 	/* Helper function to get an element's exact position*/
 	function getPosition(elem) {
@@ -530,98 +609,3 @@ if (!detectIE() && !detectFirefox()) {
 	doc.setAttribute('data-useragent', 'notie');
 }
 </script>
-
-
-
-
-
-
-
-
-<table style="width:100%;">
-  <tbody>
-    <tr>
-      <td class="treemapTable"><confirmit:wysiwygcomponent type="AggregatedTable" id="7b420ac5-47d1-448c-b721-5d05b1fe1c05" /></td>
-      <td><div class="treemap" id="treemap"></div></td>
-    </tr>
-    <tr>
-      <td class="treemapTable"><confirmit:wysiwygcomponent type="AggregatedTable" id="989f7dac-5688-491b-9e4b-4130456b6d0e" /></td>
-      <td><div class="treemap" id="treemap2"></div></td>
-    </tr>
-	<tr>
-      <td class="treemapTable"><confirmit:wysiwygcomponent type="AggregatedTable" id="da775cc7-910e-4998-9c52-3f0001e2628f" /></td>
-      <td><div class="treemap" id="treemap3"></div></td>
-    </tr>
-  </tbody>
-</table>
-<confirmit:wysiwygcomponent type="LanguageText" id="d026323b-53ca-4064-9d37-059f0a740829" />
-
-
-
-
-<script>
-/***********
-Config: 
- - CellsColor - main color of cells 
-	*** default: 'FEF62F' ***
-	
- - ShadeRange - percentage of color deviation - from 0 to 100 
- (when 0, all cells has the same color, 
-  when 100 - complete random, 
-  when between - colors vary around the main CellsColor )
-	*** default: 20 ***
-	
- - TreemapTitle - chart title 
-	*** default : 'Answers' ***
-	
- - Width - width of chart
-	*** default : 500 ***
-	
- - Height - height of chart
-	*** default : 350 ***
-	
-	  <option value="0"> RED</option>
-      <option value="30">ORANGE</option>
-      <option value="60">YELLOW</option>
-      <option value="90">CHARTREUSE GREEN</option>
-      <option value="120">GREEN</option>
-      <option value="150">TURQUOISE</option>
-      <option value="180">CYAN</option>
-      <option value="210">AZURE</option>
-      <option value="240">BLUE</option>
-      <option value="270">VIOLET</option>
-      <option value="300">MAGENTA</option>
-      <option value="330">ROSE</option>
-
-***********/
-
-var config = [
-	{
-		CellsColor: '#2F56E4', 
-		ShadeRange: 20, 
-		TreemapTitle: 'Age range', 
-		Height: 320, 
-		Width: 550, 
-		Hue: 180
-	}, 
-	{
-		CellsColor: '#FF9218', 
-		ShadeRange: 40, 
-		TreemapTitle: 'Gender/Member', 
-		Height: 256, 
-		Width: 550,
-		Hue: 0
-	}, 
-	{
-		
-	}
-]; 
-
-var cells = ScanTables('.treemapTable');
-var ids = ['#treemap', '#treemap2', '#treemap3'];
-
-for (var i = 0; i < cells.length; i++) {
-	CreateTreemap(cells[i], ids[i], config[i]);
-}  
-</script>
-
