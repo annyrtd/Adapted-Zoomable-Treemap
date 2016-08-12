@@ -116,7 +116,7 @@ function detectIE() {
 	return false;
 }
 
-function ScanTables(selector, config) {
+function ScanTables(selector) {
 	
 	var items = document.querySelectorAll(selector + ' table');
 
@@ -191,58 +191,23 @@ function generateTooltipBackground(hue){
   return hsl;
 }
 
-function GetRandomColor(color, range) {
-	var red = color.substr(0,2);
-	var green = color.substr(2,2);
-	var blue = color.substr(4,2);
-		
-	var redrand = GetRandomColorComponent(red, range);
-	var greenrand = GetRandomColorComponent(green, range);
-	var bluerand = GetRandomColorComponent(blue, range);
-		
-	var c = redrand + greenrand + bluerand;
-	return c;	
+function CreateTreemaps(cells, ids) {
+	for (var i = 0; i < cells.length; i++) {
+		CreateTreemap(cells[i], ids[i], config[i]);
+	}  
 }
-	
-function GetRandomColorComponent(component, range) {
-	if (!component || Number.isNaN(parseInt(component, 16))) {
-		return Math.floor(Math.random()*255).toString(16);
-	}	
-	
-	var number = parseInt(component, 16);
-	var result, startNumber = 0;
-
-	if (number - range/2 <= 0) {
-		startNumber = 0;
-	} else {
-		if (number + range/2 >= 255) {
-			startNumber = 255 - range;
-		} else {
-			startNumber = number - range/2;
-		}
-	}
-	
-	result = Pad((startNumber + Math.floor(Math.random()*range)).toString(16), 2);
-	
-	return result;
-}
-
-function Pad(num, size) 
-{
-    var s = num+"";
-    while (s.length < size) s = "0" + s;
-    return s;
-}  
-
 
 function CreateTreemap(cells, id, config) {
-
-	var cellsColor = (config && config.CellsColor) ? config.CellsColor.replace(/#/g, '') : 'FEF62F';
-	var shadeRange = (config && config.ShadeRange && !Number.isNaN(parseInt(config.ShadeRange)) && (+config.ShadeRange) >= 0 && (+config.ShadeRange) <= 100) ? (2*Math.floor(255*parseInt(config.ShadeRange)/200)) : 50;
+	if (!id)
+		return;
+	id = (id.indexOf('#') == 0) ? id : '#' + id;
+	
 	var treemapTitle = (config && config.TreemapTitle) ? config.TreemapTitle : 'Answers';
 	var root = { name: treemapTitle, children: cells };
 	var hue = (config && config.Hue && !Number.isNaN(parseInt(config.Hue)) && (+config.Hue) >= 0 && (+config.Hue) <= 360) ? config.Hue : 60;
 	var showValue = (config && config.ShowValue) ? true : false;
+	
+	var index = 0;
 	
 	var margin = {top: 20, right: 0, bottom: 0, left: 0},
     formatNumber = d3.format(",d"),
@@ -250,7 +215,6 @@ function CreateTreemap(cells, id, config) {
 	func = d3.scale.category20c(),
 	color = function() {		
 		return generateShades(hue);
-		/*return GetRandomColor(cellsColor, shadeRange);*/
 	};
 	
 	var width = (config.Width && !Number.isNaN(parseInt(config.Width)) && (+config.Width) >= 0 && (+config.Width) <= 1000) ? config.Width : 500;

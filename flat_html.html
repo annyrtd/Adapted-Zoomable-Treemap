@@ -1,15 +1,15 @@
 <table style="width:100%;">
   <tbody>
     <tr>
-      <td class="treemapTable"><confirmit:wysiwygcomponent type="AggregatedTable" id="7b420ac5-47d1-448c-b721-5d05b1fe1c05" /></td>
+      <td class="treemapTableContainer"><confirmit:wysiwygcomponent type="AggregatedTable" id="7b420ac5-47d1-448c-b721-5d05b1fe1c05" /></td>
       <td><div class="treemap" id="treemap"></div></td>
     </tr>
     <tr>
-      <td class="treemapTable"><confirmit:wysiwygcomponent type="AggregatedTable" id="989f7dac-5688-491b-9e4b-4130456b6d0e" /></td>
+      <td class="treemapTableContainer"><confirmit:wysiwygcomponent type="AggregatedTable" id="989f7dac-5688-491b-9e4b-4130456b6d0e" /></td>
       <td><div class="treemap" id="treemap2"></div></td>
     </tr>
 	<tr>
-      <td class="treemapTable"><confirmit:wysiwygcomponent type="AggregatedTable" id="da775cc7-910e-4998-9c52-3f0001e2628f" /></td>
+      <td class="treemapTableContainer"><confirmit:wysiwygcomponent type="AggregatedTable" id="da775cc7-910e-4998-9c52-3f0001e2628f" /></td>
       <td><div class="treemap" id="treemap3"></div></td>
     </tr>
   </tbody>
@@ -21,16 +21,7 @@
 
 <script>
 /***********
-Config: 
- - CellsColor - main color of cells 
-	*** default: 'FEF62F' ***
-	
- - ShadeRange - percentage of color deviation - from 0 to 100 
- (when 0, all cells has the same color, 
-  when 100 - complete random, 
-  when between - colors vary around the main CellsColor )
-	*** default: 20 ***
-	
+Config: 	
  - TreemapTitle - chart title 
 	*** default : 'Answers' ***
 	
@@ -40,8 +31,10 @@ Config:
  - Height - height of chart
 	*** default : 350 ***
 	
- - Hue - color shade - from 0 to 360 
+ - Hue - color shade
+	- from 0 to 360 
 	*** default : 60 ***
+	
 	Some intermediate values:
 	0: RED
     30: ORANGE
@@ -55,19 +48,30 @@ Config:
     270: VIOLET
     300: MAGENTA
     330: ROSE
+	
+ - ShowValue - whether value of a cell should be shown in tooltip or not
+	*** default : false ***
+	
+ - ValueColumnNumber - index of table column where cell value should be found
+	- from 1 to Total table column number
+	*** default : 1 ***
+	
+ - TooltipInfo - info lines for tooltip info
+	- array of objects - one object for each line:
+		- ColumnNumber - !required! index of table column where value for this line should be found
+		- Name - line title
+			*** default : taken from column header ***
 
 ***********/
 
 var config = [
-{
-		CellsColor: '#2F56E4', 
-		ShadeRange: 20, 
+	{
 		TreemapTitle: 'Age range', 
 		Height: 287, 
 		Width: 550, 
 		Hue: 180,
-		ValueColumnNumber: 2,
 		ShowValue: true,
+		ValueColumnNumber: 2,
 		TooltipInfo: [
 			{
 				ColumnNumber: 1,
@@ -82,8 +86,6 @@ var config = [
 		]
 	}, 
 	{
-		CellsColor: '#FF9218', 
-		ShadeRange: 40, 
 		TreemapTitle: 'Gender/Member', 
 		Height: 284, 
 		Width: 550,
@@ -101,11 +103,9 @@ var config = [
 	}
 ]; 
 
-var cells = ScanTables('.treemapTable', config);
+var cells = ScanTables('.treemapTableContainer');
 var ids = ['#treemap', '#treemap2', '#treemap3'];
+CreateTreemaps(cells, ids);
 
-for (var i = 0; i < cells.length; i++) {
-	CreateTreemap(cells[i], ids[i], config[i]);
-}  
 </script>
 
