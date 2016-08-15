@@ -135,7 +135,7 @@ function ScanTables(selector) {
 			var valueColumnNumber = (
 					config[i]
 					&& config[i].ValueColumnNumber 
-					&& !Number.isNaN(parseInt(config[i].ValueColumnNumber)) 
+					&& !isNaN(parseInt(config[i].ValueColumnNumber)) 
 					&& (+config[i].ValueColumnNumber) > 0 
 					&& (+config[i].ValueColumnNumber) < rows[j].children.length
 				) 
@@ -154,7 +154,7 @@ function ScanTables(selector) {
 				for (var k = 0; k < data.length; k++) {
 					var datum = data[k];
 					var colNumber = datum.ColumnNumber 
-						&& !Number.isNaN(parseInt(datum.ColumnNumber)) 
+						&& !isNaN(parseInt(datum.ColumnNumber)) 
 						&& (+datum.ColumnNumber) > 0 
 						&& (+datum.ColumnNumber) < rows[j].children.length 						
 						? datum.ColumnNumber 
@@ -214,7 +214,7 @@ function CreateTreemap(cells, id, config) {
 	
 	var treemapTitle = (config && config.TreemapTitle) ? config.TreemapTitle : 'Answers';
 	var root = { name: treemapTitle, children: cells };
-	var hue = (config && config.Hue && !Number.isNaN(parseInt(config.Hue)) && (+config.Hue) >= 0 && (+config.Hue) <= 360) ? config.Hue : 60;
+	var hue = (config && config.Hue && !isNaN(parseInt(config.Hue)) && (+config.Hue) >= 0 && (+config.Hue) <= 360) ? config.Hue : 60;
 	var showValue = (config && config.ShowValue) ? true : false;
 	
 	var index = 0;
@@ -227,8 +227,8 @@ function CreateTreemap(cells, id, config) {
 		return generateShadesNotRandom(hue, index++);
 	};
 	
-	var width = (config.Width && !Number.isNaN(parseInt(config.Width)) && (+config.Width) >= 0 && (+config.Width) <= 1000) ? config.Width : 500;
-	var height = (config.Height && !Number.isNaN(parseInt(config.Height)) && (+config.Height) >= 0 && (+config.Height) <= 1000) ? config.Height : 350;
+	var width = (config.Width && !isNaN(parseInt(config.Width)) && (+config.Width) >= 0 && (+config.Width) <= 1000) ? config.Width : 500;
+	var height = (config.Height && !isNaN(parseInt(config.Height)) && (+config.Height) >= 0 && (+config.Height) <= 1000) ? config.Height : 350;
 
     height = height - margin.top - margin.bottom;
 	
@@ -368,7 +368,9 @@ function CreateTreemap(cells, id, config) {
     g.append("text")
         .text(function(d) { return d.name; })
         .call(text_center)
-        .call(text_display);
+		.call(wrap, function(d) { return getRectWidth(d); })
+        .call(text_display)
+        .call(text_center_wrapped);
 	
 
 		
@@ -526,7 +528,19 @@ function CreateTreemap(cells, id, config) {
 		.attr("y", function(d) { return y(d.y) + 6; });
   }
   
-  function text_center(text) {
+  function text_center_wrapped(text) {
+	if (detectFirefox()) {
+		return;
+	}
+    text.attr("y", function(d) { 
+		var y1 = y(d.y);
+		var h = getRectHeight(d);
+		var h2 = this.scrollHeight;
+		return y1 + (h - h2)/2 + 12; 
+	});
+  }
+  
+    function text_center(text) {
     text.attr("x", function(d) { 
 						return x(d.x) + getRectWidth(d)/2; 
 					})
@@ -535,6 +549,7 @@ function CreateTreemap(cells, id, config) {
         .attr("dy", function(d) { return 4; })
   }
   
+  
   function text_display(text) {
     text.style('display', function(d) {
 			var isHidden = (this.style.display == 'none');
@@ -542,7 +557,8 @@ function CreateTreemap(cells, id, config) {
 			var shouldBeShown = ((this.scrollWidth + 8) < getRectWidth(d)) && ((this.scrollHeight + 4) < getRectHeight(d));
 			
 			if (detectFirefox()) {
-				shouldBeShown = ((this.firstChild.length*6.5 + 8) < getRectWidth(d)) && (18 < getRectHeight(d));			
+				console.log(this);
+				shouldBeShown = (this.firstChild && (this.firstChild.length*6.5 + 8) < getRectWidth(d)) && (18 < getRectHeight(d));			
 			}
 			
 			if (isHidden) { this.style.display = 'none'; }
@@ -577,8 +593,56 @@ function CreateTreemap(cells, id, config) {
 	return y(d.y + d.dy) - y(d.y);
   }
   }
+  
+  
+  function wrap(text, width) {
+	if (detectFirefox()) {
+		return;
+	}
+  text.each(function(d,i) {
+    var text = d3.select(this),
+        words = text.text().split(/\s+/).reverse(),
+        word,
+        line = [],
+        lineHeight = 1.2, /*ems*/
+        y = text.attr("y"),
+		x = text.attr("x"),
+        dy = 0,
+        tspan = text.text(null).append("tspan").attr("x", x).attr("dy", "0");
+    while (word = words.pop()) {
+      line.push(word);
+      tspan.text(line.join(" "));
+      if (tspan.node().getComputedTextLength() + 8 > width(d)) {
+        line.pop();
+        tspan.text(line.join(" "));
+        line = [word];
+        tspan = text.append("tspan").attr("x", x).attr("dy", (+(lineHeight) + +(dy)) + "em").text(word);
+      }
+    }
+  });
+}
 
- 
+ function toEm(value){
+    var that = parseInt(value,10);
+	
+        var scopeTest = d3.select('body')
+		.append('div')
+		.text('&nbsp;')
+		/*.style('display', 'none')*/
+		.style('font-size', '1em')
+		.style('margin', '0')
+		.style('padding', '0')
+		.style('height', 'auto')
+		.style('line-height', '1')
+		.style('border', '0');
+		
+		console.log(scopeTest[0][0]);
+		
+        var scopeVal = scopeTest[0][0].clientHeight;
+		
+    scopeTest.remove();
+    return (that / scopeVal).toFixed(8);
+}; 
   
 var doc = document.documentElement;
 if (!detectIE() && !detectFirefox()) {
