@@ -1,24 +1,3 @@
-<table style="width:100%;">
-  <tbody>
-    <tr>
-      <td class="treemapTableContainer"><confirmit:wysiwygcomponent type="AggregatedTable" id="7b420ac5-47d1-448c-b721-5d05b1fe1c05" /></td>
-      <td><div class="treemap" id="treemap"></div></td>
-    </tr>
-    <tr>
-      <td class="treemapTableContainer"><confirmit:wysiwygcomponent type="AggregatedTable" id="989f7dac-5688-491b-9e4b-4130456b6d0e" /></td>
-      <td><div class="treemap" id="treemap2"></div></td>
-    </tr>
-	<tr>
-      <td class="treemapTableContainer"><confirmit:wysiwygcomponent type="AggregatedTable" id="da775cc7-910e-4998-9c52-3f0001e2628f" /></td>
-      <td><div class="treemap" id="treemap3"></div></td>
-    </tr>
-  </tbody>
-</table>
-<confirmit:wysiwygcomponent type="LanguageText" id="d026323b-53ca-4064-9d37-059f0a740829" />
-
-
-
-
 <script>
 /***********
 Config: 	
@@ -63,9 +42,10 @@ Config:
 			*** default : taken from column header ***
 
 ***********/
-
 var config = [
 	{
+		TableContainerId: '#treemapTableContainer',
+		TreemapContainerId: '#treemap',
 		TreemapTitle: 'Age range', 
 		Height: 287, 
 		Width: 550, 
@@ -86,6 +66,8 @@ var config = [
 		]
 	}, 
 	{
+		TableContainerId: '#treemapTableContainer2',
+		TreemapContainerId: '#treemap2',
 		TreemapTitle: 'Gender/Member', 
 		Height: 284, 
 		Width: 550,
@@ -99,13 +81,30 @@ var config = [
 			}
 		]
 	}, 
-	{		
+	{	
+		TableContainerId: '#treemapTableContainer3',	
+		TreemapContainerId: '#treemap3',
 	}
 ]; 
-
-var cells = ScanTables('.treemapTableContainer');
-var ids = ['#treemap', '#treemap2', '#treemap3'];
-CreateTreemaps(cells, ids);
-
 </script>
 
+
+
+
+<table style="width:100%;">
+  <tbody>
+    <tr>
+      <td id="treemapTableContainer"><confirmit:wysiwygcomponent type="AggregatedTable" id="7b420ac5-47d1-448c-b721-5d05b1fe1c05" /></td>
+      <td><div class="treemap" id="treemap"></div></td>
+    </tr>
+    <tr>
+      <td id="treemapTableContainer2"><confirmit:wysiwygcomponent type="AggregatedTable" id="989f7dac-5688-491b-9e4b-4130456b6d0e" /></td>
+      <td><div class="treemap" id="treemap2"></div></td>
+    </tr>
+	<tr>
+      <td id="treemapTableContainer3"><confirmit:wysiwygcomponent type="AggregatedTable" id="da775cc7-910e-4998-9c52-3f0001e2628f" /></td>
+      <td><div class="treemap" id="treemap3"></div></td>
+    </tr>
+  </tbody>
+</table>
+<confirmit:wysiwygcomponent type="LanguageText" id="d026323b-53ca-4064-9d37-059f0a740829" />

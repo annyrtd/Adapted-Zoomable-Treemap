@@ -90,6 +90,8 @@ html[data-useragent='notie'] .children:hover rect.child {
 <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
 <script>
 
+var ids = [];
+
 function detectFirefox() {
 	return navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
 }
@@ -116,9 +118,23 @@ function detectIE() {
 	return false;
 }
 
-function ScanTables(selector) {
+function ScanTables() {
+	if (!config) 
+		return;
 	
-	var items = document.querySelectorAll(selector + ' table');
+	var items = [];
+	for (var i = 0; i < config.length; i++) {
+		var id = config[i].TableContainerId;
+		id = (id.indexOf('#') == 0) ? id : '#' + id;
+		var item = document.querySelector(id + ' table');
+		if (!item) continue;
+		
+		var treemapId = config[i].TreemapContainerId;
+		if (!treemapId) continue;
+			
+		ids[ids.length] = treemapId;		
+		items[items.length] = item;		
+	}
 
 	if (items.length <= 0) { 
 		return;
@@ -621,31 +637,13 @@ function CreateTreemap(cells, id, config) {
     }
   });
 }
-
- function toEm(value){
-    var that = parseInt(value,10);
-	
-        var scopeTest = d3.select('body')
-		.append('div')
-		.text('&nbsp;')
-		/*.style('display', 'none')*/
-		.style('font-size', '1em')
-		.style('margin', '0')
-		.style('padding', '0')
-		.style('height', 'auto')
-		.style('line-height', '1')
-		.style('border', '0');
-		
-		console.log(scopeTest[0][0]);
-		
-        var scopeVal = scopeTest[0][0].clientHeight;
-		
-    scopeTest.remove();
-    return (that / scopeVal).toFixed(8);
-}; 
   
 var doc = document.documentElement;
 if (!detectIE() && !detectFirefox()) {
 	doc.setAttribute('data-useragent', 'notie');
 }
+
+var cells = ScanTables();
+CreateTreemaps(cells, ids);
+
 </script>
