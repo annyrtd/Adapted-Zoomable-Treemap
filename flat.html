@@ -90,8 +90,6 @@ html[data-useragent='notie'] .children:hover rect.child {
 <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
 <script>
 
-var ids = [];
-
 function detectFirefox() {
 	return navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
 }
@@ -118,81 +116,6 @@ function detectIE() {
 	return false;
 }
 
-function ScanTables() {
-	if (!config) 
-		return;
-	
-	var items = [];
-	for (var i = 0; i < config.length; i++) {
-		var id = config[i].TableContainerId;
-		id = (id.indexOf('#') == 0) ? id : '#' + id;
-		var item = document.querySelector(id + ' table');
-		if (!item) continue;
-		
-		var treemapId = config[i].TreemapContainerId;
-		if (!treemapId) continue;
-			
-		ids[ids.length] = treemapId;		
-		items[items.length] = item;		
-	}
-
-	if (items.length <= 0) { 
-		return;
-	}
-	
-	var rows, cells = [];
-	
-	for (var i = 0; i < items.length; i++) {
-		cells[i] = [];
-		rows = items[i].querySelectorAll('tbody tr');
-		
-		for (var j = 0; j < rows.length; j++) {
-		
-			var valueColumnNumber = (
-					config[i]
-					&& config[i].ValueColumnNumber 
-					&& !isNaN(parseInt(config[i].ValueColumnNumber)) 
-					&& (+config[i].ValueColumnNumber) > 0 
-					&& (+config[i].ValueColumnNumber) < rows[j].children.length
-				) 
-				? config[i].ValueColumnNumber 
-				: 1;
-
-			cells[i][j] = {
-				name: rows[j].children[0].innerText, 
-				value: rows[j].children[valueColumnNumber].innerText
-			};
-			
-			if (config[i] && config[i].TooltipInfo) {
-				var data = config[i].TooltipInfo;
-				var info = cells[i][j].info = {};
-				
-				for (var k = 0; k < data.length; k++) {
-					var datum = data[k];
-					var colNumber = datum.ColumnNumber 
-						&& !isNaN(parseInt(datum.ColumnNumber)) 
-						&& (+datum.ColumnNumber) > 0 
-						&& (+datum.ColumnNumber) < rows[j].children.length 						
-						? datum.ColumnNumber 
-						: undefined;
-						
-					if (!colNumber) 
-						continue;
-					
-					var name = datum.Name ? datum.Name : items[i].querySelectorAll('thead tr')[0].children[colNumber].innerText;
-					var value = rows[j].children[colNumber].innerText;
-					
-					info[name] = value;
-				}
-			}
-		}
-	}
-	
-	console.log(cells);
-	
-	return cells;	
-}
-
 function rand(min, max){
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -217,9 +140,99 @@ function generateTooltipBackground(hue){
   return hsl;
 }
 
-function CreateTreemaps(cells, ids) {
-	for (var i = 0; i < cells.length; i++) {
-		CreateTreemap(cells[i], ids[i], config[i]);
+function ScanTables() {
+	if (!config) 
+		return;
+		
+	var treemapObject = {
+		configs: [],
+		tables: [],
+		treemapIds: []
+	};
+	
+	var configs = treemapObject.configs;
+	var tables = treemapObject.tables;
+	var treemapIds = treemapObject.treemapIds;
+	
+	var items = [];
+	for (var i = 0; i < config.length; i++) {
+		var id = config[i].TableContainerId;
+		id = (id.indexOf('#') == 0) ? id : '#' + id;
+		var item = document.querySelector(id + ' table');
+		if (!item) continue;
+		
+		var treemapId = config[i].TreemapContainerId;
+		if (!treemapId) continue;
+		treemapId = (treemapId.indexOf('#') == 0) ? treemapId : '#' + treemapId;
+			
+		treemapIds[treemapIds.length] = treemapId;		
+		items[items.length] = item;		
+		configs[configs.length] = config[i];
+	}
+
+	if (items.length <= 0) { 
+		return;
+	}
+	
+	var rows;
+	
+	for (var i = 0; i < items.length; i++) {
+		tables[i] = [];
+		rows = items[i].querySelectorAll('tbody tr');
+		
+		for (var j = 0; j < rows.length; j++) {
+		
+			var valueColumnNumber = (
+					config[i]
+					&& config[i].ValueColumnNumber 
+					&& !isNaN(parseInt(config[i].ValueColumnNumber)) 
+					&& (+config[i].ValueColumnNumber) > 0 
+					&& (+config[i].ValueColumnNumber) < rows[j].children.length
+				) 
+				? config[i].ValueColumnNumber 
+				: 1;
+
+			tables[i][j] = {
+				name: rows[j].children[0].innerText, 
+				value: rows[j].children[valueColumnNumber].innerText
+			};
+			
+			if (config[i] && config[i].TooltipInfo) {
+				var data = config[i].TooltipInfo;
+				var info = tables[i][j].info = {};
+				
+				for (var k = 0; k < data.length; k++) {
+					var datum = data[k];
+					var colNumber = datum.ColumnNumber 
+						&& !isNaN(parseInt(datum.ColumnNumber)) 
+						&& (+datum.ColumnNumber) > 0 
+						&& (+datum.ColumnNumber) < rows[j].children.length 						
+						? datum.ColumnNumber 
+						: undefined;
+						
+					if (!colNumber) 
+						continue;
+					
+					var name = datum.Name ? datum.Name : items[i].querySelectorAll('thead tr')[0].children[colNumber].innerText;
+					var value = rows[j].children[colNumber].innerText;
+					
+					info[name] = value;
+				}
+			}
+		}
+	}
+	
+	return treemapObject;	
+}
+
+function CreateTreemaps() {
+	var obj = ScanTables();
+	
+	if (!obj)
+		return;
+	
+	for (var i = 0; i < obj.tables.length; i++) {
+		CreateTreemap(obj.tabless[i], obj.treemapIds[i], obj.configs[i]);
 	}  
 }
 
@@ -643,7 +656,6 @@ if (!detectIE() && !detectFirefox()) {
 	doc.setAttribute('data-useragent', 'notie');
 }
 
-var cells = ScanTables();
-CreateTreemaps(cells, ids);
+CreateTreemaps();
 
 </script>
