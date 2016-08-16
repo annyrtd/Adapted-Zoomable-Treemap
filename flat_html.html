@@ -1,6 +1,13 @@
 <script>
 /***********
 Config: 	
+
+ - TableContainerId - the id of an element containing aggregated table
+	!required!	
+	
+ - TreemapContainerId - the id of an element where treemap should be drawn
+ 	!required!	
+ 
  - TreemapTitle - chart title 
 	*** default : 'Answers' ***
 	
@@ -35,9 +42,11 @@ Config:
 	- from 1 to Total table column number
 	*** default : 1 ***
 	
- - TooltipInfo - info lines for tooltip info
-	- array of objects - one object for each line:
-		- ColumnNumber - !required! index of table column where value for this line should be found
+ - TooltipInfo - info lines for tooltip info,
+	array of objects - one object for each line:
+		- ColumnNumber - index of table column where value for this line should be found
+			!required! 
+		
 		- Name - line title
 			*** default : taken from column header ***
 
