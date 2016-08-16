@@ -89,10 +89,12 @@ html[data-useragent='notie'] .children:hover rect.child {
 </style> 
 <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
 <script>
-
-function detectFirefox() {
-	return navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+var doc = document.documentElement;
+if (!detectIE() && !detectFirefox()) {
+	doc.setAttribute('data-useragent', 'notie');
 }
+
+CreateTreemaps();
 
 function detectIE() {
 	var ua = window.navigator.userAgent;
@@ -116,28 +118,19 @@ function detectIE() {
 	return false;
 }
 
-function rand(min, max){
-	return Math.floor(Math.random() * (max - min + 1)) + min;
+function detectFirefox() {
+	return navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
 }
 
-function generateShades(hue){
-  var hsl = "hsl("+hue+", "+ rand(70,80) +"%, "+rand(45, 80) +"%)";  
-  return hsl;
-}
-
-function generateShadesNotRandom(hue, index){
-  var hsl = "hsl(" + hue + ", " + getNotRandomNumber(70,80, 2, index) + "%, " +getNotRandomNumber(45, 80, 3, index) + "%)";  
-  return hsl;
-}
-
-function getNotRandomNumber(min, max, step, index) {
-	var number = min + (step*index) % (max - min);
-	return number;
-}
-
-function generateTooltipBackground(hue){
-  var hsl = "hsl("+hue+", "+ rand(90,90) +"%, "+rand(90, 90) +"%)";  
-  return hsl;
+function CreateTreemaps() {
+	var obj = ScanTables();
+	
+	if (!obj)
+		return;
+	
+	for (var i = 0; i < obj.tables.length; i++) {
+		CreateTreemap(obj.tables[i], obj.treemapIds[i], obj.configs[i]);
+	}  
 }
 
 function ScanTables() {
@@ -223,17 +216,6 @@ function ScanTables() {
 	}
 	
 	return treemapObject;	
-}
-
-function CreateTreemaps() {
-	var obj = ScanTables();
-	
-	if (!obj)
-		return;
-	
-	for (var i = 0; i < obj.tables.length; i++) {
-		CreateTreemap(obj.tabless[i], obj.treemapIds[i], obj.configs[i]);
-	}  
 }
 
 function CreateTreemap(cells, id, config) {
@@ -476,7 +458,7 @@ function CreateTreemap(cells, id, config) {
 	}
 		
 	/* Helper function to get an element's exact position*/
-	function getPosition(elem) {
+  function getPosition(elem) {
 		var box = elem.getBoundingClientRect();
 		 
 		var body = document.body;
@@ -495,10 +477,8 @@ function CreateTreemap(cells, id, config) {
 		 
 		return { top: Math.round(top), left: Math.round(left), right: Math.round(right), bottom: Math.round(bottom) };
 	}
-
-		
-		
-    function transition(d) {
+	
+  function transition(d) {
       if (transitioning || !d) return;
       transitioning = true;
 	  
@@ -551,12 +531,6 @@ function CreateTreemap(cells, id, config) {
     return g;
   }
 
-  function text_topleft(text) {
-    text.attr("dy", ".75em")
-		.attr("x", function(d) { return x(d.x) + 6; })
-		.attr("y", function(d) { return y(d.y) + 6; });
-  }
-  
   function text_center_wrapped(text) {
 	if (detectFirefox()) {
 		return;
@@ -569,7 +543,7 @@ function CreateTreemap(cells, id, config) {
 	});
   }
   
-    function text_center(text) {
+  function text_center(text) {
     text.attr("x", function(d) { 
 						return x(d.x) + getRectWidth(d)/2; 
 					})
@@ -577,7 +551,6 @@ function CreateTreemap(cells, id, config) {
 		.attr("text-anchor", "middle")
         .attr("dy", function(d) { return 4; })
   }
-  
   
   function text_display(text) {
     text.style('display', function(d) {
@@ -621,41 +594,53 @@ function CreateTreemap(cells, id, config) {
   function getRectHeight(d) {
 	return y(d.y + d.dy) - y(d.y);
   }
-  }
-  
   
   function wrap(text, width) {
-	if (detectFirefox()) {
-		return;
-	}
-  text.each(function(d,i) {
-    var text = d3.select(this),
-        words = text.text().split(/\s+/).reverse(),
-        word,
-        line = [],
-        lineHeight = 1.2, /*ems*/
-        y = text.attr("y"),
-		x = text.attr("x"),
-        dy = 0,
-        tspan = text.text(null).append("tspan").attr("x", x).attr("dy", "0");
-    while (word = words.pop()) {
-      line.push(word);
-      tspan.text(line.join(" "));
-      if (tspan.node().getComputedTextLength() + 8 > width(d)) {
-        line.pop();
-        tspan.text(line.join(" "));
-        line = [word];
-        tspan = text.append("tspan").attr("x", x).attr("dy", (+(lineHeight) + +(dy)) + "em").text(word);
-      }
-    }
-  });
-}
-  
-var doc = document.documentElement;
-if (!detectIE() && !detectFirefox()) {
-	doc.setAttribute('data-useragent', 'notie');
-}
+		if (detectFirefox()) {
+			return;
+		}
+	  text.each(function(d,i) {
+		var text = d3.select(this),
+			words = text.text().split(/\s+/).reverse(),
+			word,
+			line = [],
+			lineHeight = 1.2, /*ems*/
+			y = text.attr("y"),
+			x = text.attr("x"),
+			dy = 0,
+			tspan = text.text(null).append("tspan").attr("x", x).attr("dy", "0");
+		while (word = words.pop()) {
+		  line.push(word);
+		  tspan.text(line.join(" "));
+		  if (tspan.node().getComputedTextLength() + 8 > width(d)) {
+			line.pop();
+			tspan.text(line.join(" "));
+			line = [word];
+			tspan = text.append("tspan").attr("x", x).attr("dy", (+(lineHeight) + +(dy)) + "em").text(word);
+		  }
+		}
+	  });
+  }
 
-CreateTreemaps();
+
+	function generateShadesNotRandom(hue, index){
+	  var hsl = "hsl(" + hue + ", " + getNotRandomNumber(70,80, 2, index) + "%, " +getNotRandomNumber(45, 80, 3, index) + "%)";  
+	  return hsl;
+	}
+
+	function getNotRandomNumber(min, max, step, index) {
+		var number = min + (step*index) % (max - min);
+		return number;
+	}
+
+	function generateTooltipBackground(hue){
+	  var hsl = "hsl("+hue+", "+ rand(90,90) +"%, "+rand(90, 90) +"%)";  
+	  return hsl;
+	}
+	
+	function rand(min, max){
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+}
 
 </script>
