@@ -158,9 +158,10 @@ function ScanTables() {
 		if (!treemapId) continue;
 		treemapId = (treemapId.indexOf('#') == 0) ? treemapId : '#' + treemapId;
 			
-		treemapIds[treemapIds.length] = treemapId;		
-		items[items.length] = item;		
+		treemapIds[treemapIds.length] = treemapId;			
 		configs[configs.length] = config[i];
+		
+		items[items.length] = item;	
 	}
 
 	if (items.length <= 0) { 
@@ -176,13 +177,13 @@ function ScanTables() {
 		for (var j = 0; j < rows.length; j++) {
 		
 			var valueColumnNumber = (
-					config[i]
-					&& config[i].ValueColumnNumber 
-					&& !isNaN(parseInt(config[i].ValueColumnNumber)) 
-					&& (+config[i].ValueColumnNumber) > 0 
-					&& (+config[i].ValueColumnNumber) < rows[j].children.length
+					configs[i]
+					&& configs[i].ValueColumnNumber 
+					&& !isNaN(parseInt(configs[i].ValueColumnNumber)) 
+					&& (+configs[i].ValueColumnNumber) > 0 
+					&& (+configs[i].ValueColumnNumber) < rows[j].children.length
 				) 
-				? config[i].ValueColumnNumber 
+				? configs[i].ValueColumnNumber 
 				: 1;
 
 			tables[i][j] = {
@@ -190,8 +191,8 @@ function ScanTables() {
 				value: rows[j].children[valueColumnNumber].innerText
 			};
 			
-			if (config[i] && config[i].TooltipInfo) {
-				var data = config[i].TooltipInfo;
+			if (configs[i] && configs[i].TooltipInfo) {
+				var data = configs[i].TooltipInfo;
 				var info = tables[i][j].info = {};
 				
 				for (var k = 0; k < data.length; k++) {
